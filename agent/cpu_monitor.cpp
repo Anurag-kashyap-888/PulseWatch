@@ -2,6 +2,8 @@
 #include<fstream>
 #include<string>
 #include<sstream>
+#include<thread>
+#include<chrono>
 using LL = long long;
 
  typedef struct{
@@ -62,16 +64,29 @@ CpuStats calculateCpuDelta(CpuStats T1,CpuStats T2){
     return temp;
 }
 
-calculateCpuUsage(Delta){
+float calculateCpuUsage(CpuStats Delta){
+    LL total,idle,busy;
+    busy=Delta.user+Delta.nice+Delta.system+Delta.irq+Delta.softirq+Delta.steal;
+    idle=Delta.idle+Delta.iowait;
+    total=idle+busy;
+    return 100*busy/static_cast<float>(total);
 }
 
 int main(){
-    CpuStats T1=readCpuStats();
-    delay(1);
-    CpuStats T2=readCpuStats();
+    int i=0,n;
+    std::cin>>n;
     CpuStats T;
     T.valid=false;
-    if(T1.valid && T2.valid) T=calculateCpuDelta(T1,T2);
-    //pausing here
+    CpuStats T1=readCpuStats();
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    CpuStats T2=readCpuStats();
+    while(i++<n && T1.valid && T2.valid){
+    T=calculateCpuDelta(T1,T2);
+    float usage=calculateCpuUsage(T);
+    std::cout<<"CPU Usage: "<<usage<<'\n';
+    T1=T2;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    T2=readCpuStats();
+    }
     return 0;
 }
